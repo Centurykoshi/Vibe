@@ -4,7 +4,7 @@ import { useTRPC } from "@/trpc/client";
 import { caller, getQueryClient , trpc} from "@/trpc/server";
 import { dehydrate, HydrationBoundary, useQuery } from "@tanstack/react-query";
 import { Client } from "./Client";
-import { Suspense } from "react";
+import { Suspense } from "react";;
 
 const Page  = async()=> { 
   const data = await caller.CreateAi({text:"Piyush's Server"}); 
