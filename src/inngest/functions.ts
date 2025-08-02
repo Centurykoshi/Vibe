@@ -18,7 +18,6 @@ export const helloWorld = inngest.createFunction(
     const CodeAgent = createAgent({
       name: "CodeAgent",
       system:
-      
         "You are an expert Next.js developer. You write readable, maintainable code and simple Next.js & React snippets.",
       model: gemini({ model: "gemini-1.5-flash" }),
       tools: [
@@ -28,8 +27,8 @@ export const helloWorld = inngest.createFunction(
           parameters: z.object({
             command: z.string(),
           }),
-          handler: async ({ command }, { step }) => {
-            return await step?.run("terminal", async () => {
+          handler: async ({ command }, context) => {
+            return await context.step?.run("terminal", async () => {
               const buffers = { stdout: "", stderr: "" };
               try {
                 const sandbox = await getSandbox(sandboxId);
@@ -67,10 +66,10 @@ export const helloWorld = inngest.createFunction(
               })
             ),
           }),
-          handler: async ({ files }, { step, network }) => {
-            const newFiles = await step?.run("createOrUpdateFiles", async () => {
+          handler: async ({ files }, context) => {
+            const newFiles = await context.step?.run("createOrUpdateFiles", async () => {
               try {
-                const updatedFiles = network.state.data.files || {};
+                const updatedFiles = context.network?.state?.data?.files || {};
                 const sandbox = await getSandbox(sandboxId);
                 for (const file of files) {
                   await sandbox.files.write(file.path, file.content);
@@ -82,8 +81,8 @@ export const helloWorld = inngest.createFunction(
               }
             });
 
-            if (typeof newFiles === "object") {
-              network.state.data.files = newFiles;
+            if (typeof newFiles === "object" && context.network) {
+              context.network.state.data.files = newFiles;
             }
           },
         }),
@@ -94,8 +93,8 @@ export const helloWorld = inngest.createFunction(
           parameters: z.object({
             files: z.array(z.string()),
           }),
-          handler: async ({ files }, { step }) => {
-            return await step?.run("readFiles", async () => {
+          handler: async ({ files }, context) => {
+            return await context.step?.run("readFiles", async () => {
               try {
                 const sandbox = await getSandbox(sandboxId);
                 const contents = [];
@@ -111,7 +110,8 @@ export const helloWorld = inngest.createFunction(
           },
         }),
       ],
-      lifecyle : 
+      // Remove or implement lifecycle if needed
+      // lifecycle: ...
     });
 
     // Run agent
