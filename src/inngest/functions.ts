@@ -1,6 +1,6 @@
 import { inngest } from "./client";
-import {openai, gemini, createAgent } from "@inngest/agent-kit";
-import { Sandbox } from '@e2b/code-interpreter'
+import { gemini, createAgent, createTool } from "@inngest/agent-kit";
+import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox } from "./utils";
 import { z } from "zod";
 
@@ -8,11 +8,13 @@ export const helloWorld = inngest.createFunction(
   { id: "hello-world" },
   { event: "test/hello.world" },
   async ({ event, step }) => {
+    // Create sandbox
+    const sandboxId = await step.run("get-sandbox-id", async () => {
+      const sandbox = await Sandbox.create("vibe-nextjs-codeai-100");
+      return sandbox.sandboxId;
+    });
 
-    const sandboxId = await step.run("get-sandbox-id", async()=>{ 
-      const sandbox = await Sandbox.create("vibe-nextjs-codeai-100"); 
-      return sandbox.sandboxId; 
-    })
+    // Create CodeAgent
     const CodeAgent = createAgent({
       name: "CodeAgent",
       system:
@@ -115,12 +117,14 @@ export const helloWorld = inngest.createFunction(
       "Write the following snippet: " + event.data.value
     );
 
-const sandboxUrl = await step.run("get-sandbox-url",async ()=>{ 
-  const sandbox = await getSandbox(sandboxId); 
-  const host =  sandbox.getHost(3000); 
-  return "https://"+host; 
-})
-console.log(output);
-    return { output, sandboxUrl};
-  },
+    // Get sandbox URL
+    const sandboxUrl = await step.run("get-sandbox-url", async () => {
+      const sandbox = await getSandbox(sandboxId);
+      const host = await sandbox.getHost(3000);
+      return "https://" + host;
+    });
+
+    console.log(output);
+    return { output, sandboxUrl };
+  }
 );
