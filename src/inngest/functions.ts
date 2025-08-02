@@ -111,6 +111,7 @@ export const helloWorld = inngest.createFunction(
           },
         }),
       ],
+      lifecyle : 
     });
 
     // Run agent
