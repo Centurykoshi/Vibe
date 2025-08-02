@@ -1,33 +1,130 @@
 import { inngest } from "./client";
-import {openai, gemini, createAgent } from "@inngest/agent-kit";
-import { Sandbox } from '@e2b/code-interpreter'
+import { gemini, createAgent, createTool } from "@inngest/agent-kit";
+import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox } from "./utils";
+import { z } from "zod";
 
 export const helloWorld = inngest.createFunction(
   { id: "hello-world" },
   { event: "test/hello.world" },
   async ({ event, step }) => {
+    // Create sandbox
+    const sandboxId = await step.run("get-sandbox-id", async () => {
+      const sandbox = await Sandbox.create("vibe-nextjs-codeai-100");
+      return sandbox.sandboxId;
+    });
 
-    const sandboxId = await step.run("get-sandbox-id", async()=>{ 
-      const sandbox = await Sandbox.create("vibe-nextjs-codeai-100"); 
-      return sandbox.sandboxId; 
-    })
+    // Create CodeAgent
     const CodeAgent = createAgent({
-  name: "CodeAgent",
-  system: "You are an expert next.js developer, you write readble, maintable code. you write simple next.js & react snippets",
-  model: gemini({ model: "gemini-1.5-flash"}),
-});
+      name: "CodeAgent",
+      system:
+        "You are an expert Next.js developer. You write readable, maintainable code and simple Next.js & React snippets.",
+      model: gemini({ model: "gemini-1.5-flash" }),
+      tools: [
+        createTool({
+          name: "terminal",
+          description: "Use the terminal to run commands",
+          parameters: z.object({
+            command: z.string(),
+          }),
+          handler: async ({ command }, { step }) => {
+            return await step?.run("terminal", async () => {
+              const buffers = { stdout: "", stderr: "" };
+              try {
+                const sandbox = await getSandbox(sandboxId);
+                const result = await sandbox.commands.run(command, {
+                  onStdout: (data: string) => {
+                    buffers.stdout += data;
+                  },
+                  onStderr: (data: string) => {
+                    buffers.stderr += data;
+                  },
+                });
+                return result.stdout;
+              } catch (e) {
+                return (
+                  "Command failed " +
+                  e +
+                  "\nstdout :" +
+                  buffers.stdout +
+                  "stderror: " +
+                  buffers.stderr
+                );
+              }
+            });
+          },
+        }),
 
-const { output } = await CodeAgent.run(
-  'Write the following snippit:' + event.data.value,
-);
+        createTool({
+          name: "createOrUpdateFiles",
+          description: "Create or update files in the sandbox",
+          parameters: z.object({
+            files: z.array(
+              z.object({
+                path: z.string(),
+                content: z.string(),
+              })
+            ),
+          }),
+          handler: async ({ files }, { step, network }) => {
+            const newFiles = await step?.run("createOrUpdateFiles", async () => {
+              try {
+                const updatedFiles = network.state.data.files || {};
+                const sandbox = await getSandbox(sandboxId);
+                for (const file of files) {
+                  await sandbox.files.write(file.path, file.content);
+                  updatedFiles[file.path] = file.content;
+                }
+                return updatedFiles;
+              } catch (e) {
+                return "Error: " + e;
+              }
+            });
 
-const sandboxUrl = await step.run("get-sandbox-url",async ()=>{ 
-  const sandbox = await getSandbox(sandboxId); 
-  const host =  sandbox.getHost(3000); 
-  return "https://"+host; 
-})
-console.log(output);
-    return { output, sandboxUrl};
-  },
+            if (typeof newFiles === "object") {
+              network.state.data.files = newFiles;
+            }
+          },
+        }),
+
+        createTool({
+          name: "readFiles",
+          description: "Read files from the sandbox",
+          parameters: z.object({
+            files: z.array(z.string()),
+          }),
+          handler: async ({ files }, { step }) => {
+            return await step?.run("readFiles", async () => {
+              try {
+                const sandbox = await getSandbox(sandboxId);
+                const contents = [];
+                for (const file of files) {
+                  const content = await sandbox.files.read(file);
+                  contents.push({ path: file, content });
+                }
+                return JSON.stringify(contents);
+              } catch (e) {
+                return "Error: " + e;
+              }
+            });
+          },
+        }),
+      ],
+    });
+
+    // Run agent
+    const { output } = await CodeAgent.run(
+      "Write the following snippet: " + event.data.value
+    );
+
+    // Get sandbox URL
+    const sandboxUrl = await step.run("get-sandbox-url", async () => {
+      const sandbox = await getSandbox(sandboxId);
+      const host = await sandbox.getHost(3000);
+      return "https://" + host;
+    });
+
+    console.log(output);
+    return { output, sandboxUrl };
+  }
 );
