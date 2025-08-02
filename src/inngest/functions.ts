@@ -18,6 +18,7 @@ export const helloWorld = inngest.createFunction(
     const CodeAgent = createAgent({
       name: "CodeAgent",
       system:
+      
         "You are an expert Next.js developer. You write readable, maintainable code and simple Next.js & React snippets.",
       model: gemini({ model: "gemini-1.5-flash" }),
       tools: [
