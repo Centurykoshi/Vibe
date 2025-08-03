@@ -1,8 +1,21 @@
 import { inngest } from "./client";
-import { gemini, createAgent, createTool } from "@inngest/agent-kit";
+import { openai, createAgent, createTool, createNetwork } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox } from "./utils";
+import { PROMPT } from "@/prompt";
+import { lastAssistantTextMessageContent } from "./utils";
 import { z } from "zod";
+import "dotenv/config";
+
+// ✅ DeepSeek V3 0324 (free) from OpenRouter
+const deepseekModel = openai({
+  apiKey: process.env.OPENROUTER_API_KEY, // put your OpenRouter key in .env
+  baseUrl: "https://openrouter.ai/api/v1",
+  defaultParameters: {
+    model: "qwen/qwen3-coder:free", // DeepSeek V3 0324 free
+    temperature: 0
+  }
+});
 
 export const helloWorld = inngest.createFunction(
   { id: "hello-world" },
@@ -17,9 +30,9 @@ export const helloWorld = inngest.createFunction(
     // Create CodeAgent
     const CodeAgent = createAgent({
       name: "CodeAgent",
-      system:
-        "You are an expert Next.js developer. You write readable, maintainable code and simple Next.js & React snippets.",
-      model: gemini({ model: "gemini-1.5-flash" }),
+      system: PROMPT,
+      description: "An agent that can write code and run it in a sandbox",
+      model: deepseekModel, // ✅ now using DeepSeek V3
       tools: [
         createTool({
           name: "terminal",
@@ -110,23 +123,44 @@ export const helloWorld = inngest.createFunction(
           },
         }),
       ],
-      // Remove or implement lifecycle if needed
-      // lifecycle: ...
+      lifecycle: { 
+        onResponse: async ({ result, network }) => { 
+          const lastAssistantTextMessageText = lastAssistantTextMessageContent(result); 
+          if (lastAssistantTextMessageText && network) { 
+            if (lastAssistantTextMessageText.includes("<task_summary>")) { 
+              network.state.data.summary = lastAssistantTextMessageText;
+            }
+          }
+          return result; 
+        },
+      }
     });
 
-    // Run agent
-    const { output } = await CodeAgent.run(
-      "Write the following snippet: " + event.data.value
-    );
+    const network = createNetwork({
+      name: "coding-agent-network", 
+      agents: [CodeAgent], 
+      maxIter: 15, 
+      router: async ({ network }) => { 
+        const summary = network.state.data.summary; 
+        if (summary) return;
+        return CodeAgent; 
+      }
+    });
+
+    const result = await network.run(event.data.value); 
 
     // Get sandbox URL
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
       const sandbox = await getSandbox(sandboxId);
       const host = await sandbox.getHost(3000);
-      return "https://" + host;
+      return "https://" + host; 
     });
 
-    console.log(output);
-    return { output, sandboxUrl };
+    return { 
+      sandboxUrl, 
+      title: "Fragment", 
+      files: result.state.data.files, 
+      summary: result.state.data.summary, 
+    };
   }
 );
