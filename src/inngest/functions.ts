@@ -1,5 +1,5 @@
 import { inngest } from "./client";
-import { openai, createAgent, createTool, createNetwork } from "@inngest/agent-kit";
+import { openai, createAgent, createTool, createNetwork ,type Tool} from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox } from "./utils";
 import { PROMPT } from "@/prompt";
@@ -7,19 +7,26 @@ import { lastAssistantTextMessageContent } from "./utils";
 import { z } from "zod";
 import "dotenv/config";
 
+interface AgentState { 
+  summary?: string;
+  files?: { [path: string]: string };
+}
+
 // ✅ DeepSeek V3 0324 (free) from OpenRouter
 const deepseekModel = openai({
   apiKey: process.env.OPENROUTER_API_KEY, // put your OpenRouter key in .env
   baseUrl: "https://openrouter.ai/api/v1",
   defaultParameters: {
-    model: "qwen/qwen3-coder:free", // DeepSeek V3 0324 free
+    model: "deepseek/deepseek-chat-v3-0324:free", // DeepSeek V3 0324 free
     temperature: 0
   }
+  
 });
 
-export const helloWorld = inngest.createFunction(
-  { id: "hello-world" },
-  { event: "test/hello.world" },
+
+export const CodeAgentFunction = inngest.createFunction(
+  { id: "Code-Agent" },
+  { event: "Code-Agent/run" },
   async ({ event, step }) => {
     // Create sandbox
     const sandboxId = await step.run("get-sandbox-id", async () => {
@@ -28,7 +35,7 @@ export const helloWorld = inngest.createFunction(
     });
 
     // Create CodeAgent
-    const CodeAgent = createAgent({
+    const CodeAgent = createAgent<AgentState>({
       name: "CodeAgent",
       system: PROMPT,
       description: "An agent that can write code and run it in a sandbox",
@@ -79,10 +86,10 @@ export const helloWorld = inngest.createFunction(
               })
             ),
           }),
-          handler: async ({ files }, context) => {
-            const newFiles = await context.step?.run("createOrUpdateFiles", async () => {
+          handler: async ({ files }, {step, network} :Tool.Options<AgentState>) => {
+            const newFiles = await step?.run("createOrUpdateFiles", async () => {
               try {
-                const updatedFiles = context.network?.state?.data?.files || {};
+                const updatedFiles = network?.state?.data?.files || {};
                 const sandbox = await getSandbox(sandboxId);
                 for (const file of files) {
                   await sandbox.files.write(file.path, file.content);
@@ -123,6 +130,7 @@ export const helloWorld = inngest.createFunction(
           },
         }),
       ],
+      
       lifecycle: { 
         onResponse: async ({ result, network }) => { 
           const lastAssistantTextMessageText = lastAssistantTextMessageContent(result); 
@@ -136,7 +144,7 @@ export const helloWorld = inngest.createFunction(
       }
     });
 
-    const network = createNetwork({
+    const network = createNetwork<AgentState>({
       name: "coding-agent-network", 
       agents: [CodeAgent], 
       maxIter: 15, 
@@ -149,11 +157,39 @@ export const helloWorld = inngest.createFunction(
 
     const result = await network.run(event.data.value); 
 
+    const isError = !result.state.data.summary  || Object.keys(result.state.data.files || {}).length === 0;
+
     // Get sandbox URL
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
       const sandbox = await getSandbox(sandboxId);
       const host = await sandbox.getHost(3000);
       return "https://" + host; 
+    });
+
+    await step.run("save-result", async()=> { 
+      if(isError) { 
+        return await prisma.message.create({ 
+          data : { 
+            content : " Something went wrong ", 
+            role : "ASSISTANT",
+            type : "ERROR",
+          }
+        });
+      }
+      return await prisma.message.create({ 
+        data : { 
+          content : result.state.data.summary, 
+          role : "ASSISTANT",
+          type : "RESULT",
+          fragment : { 
+            create : { 
+              sandboxUrl : sandboxUrl,
+              title : "Fragment",
+              files : result.state.data.files,
+            }
+          }
+        }
+      })
     });
 
     return { 
