@@ -1,27 +1,34 @@
 import { inngest } from "./client";
-import { openai, createAgent, createTool, createNetwork ,type Tool} from "@inngest/agent-kit";
+import {gemini,  openai, createAgent, createTool, createNetwork ,type Tool} from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox } from "./utils";
 import { PROMPT } from "@/prompt";
 import { lastAssistantTextMessageContent } from "./utils";
 import { z } from "zod";
+
 import "dotenv/config";
+
 
 interface AgentState { 
   summary?: string;
   files?: { [path: string]: string };
 }
 
-// ✅ DeepSeek V3 0324 (free) from OpenRouter
-const deepseekModel = openai({
-  apiKey: process.env.OPENROUTER_API_KEY, // put your OpenRouter key in .env
-  baseUrl: "https://openrouter.ai/api/v1",
-  defaultParameters: {
-    model: "deepseek/deepseek-chat-v3-0324:free", // DeepSeek V3 0324 free
-    temperature: 0
-  }
-  
+  const model = gemini({
+  model: "gemini-2.5-flash",
 });
+
+
+
+// const deepseekModel = openai({
+//   apiKey: process.env.OPENROUTER_API_KEY, // put your OpenRouter key in .env
+//   baseUrl: "https://openrouter.ai/api/v1",
+//   defaultParameters: {
+//     model: "gemini-2.0-flash", // DeepSeek V3 0324 free
+//     temperature: 0.1, 
+//   }
+  
+// });
 
 
 export const CodeAgentFunction = inngest.createFunction(
@@ -39,7 +46,7 @@ export const CodeAgentFunction = inngest.createFunction(
       name: "CodeAgent",
       system: PROMPT,
       description: "An agent that can write code and run it in a sandbox",
-      model: deepseekModel, // ✅ now using DeepSeek V3
+      model: model, // ✅ now using DeepSeek V3
       tools: [
         createTool({
           name: "terminal",
@@ -74,6 +81,7 @@ export const CodeAgentFunction = inngest.createFunction(
             });
           },
         }),
+        
 
         createTool({
           name: "createOrUpdateFiles",
@@ -167,9 +175,13 @@ export const CodeAgentFunction = inngest.createFunction(
     });
 
     await step.run("save-result", async()=> { 
+
+        console.log("isError:", isError); // Log error state
+  console.log("result:", result);  
       if(isError) { 
         return await prisma.message.create({ 
           data : { 
+            projectId: event.data.projectId,
             content : " Something went wrong ", 
             role : "ASSISTANT",
             type : "ERROR",
@@ -178,6 +190,7 @@ export const CodeAgentFunction = inngest.createFunction(
       }
       return await prisma.message.create({ 
         data : { 
+          projectId: event.data.projectId,
           content : result.state.data.summary, 
           role : "ASSISTANT",
           type : "RESULT",
