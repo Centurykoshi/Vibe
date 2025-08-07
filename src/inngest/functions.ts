@@ -5,30 +5,32 @@ import { getSandbox } from "./utils";
 import { PROMPT } from "@/prompt";
 import { lastAssistantTextMessageContent } from "./utils";
 import { z } from "zod";
+import {prisma} from "@/lib/db";
 
 import "dotenv/config";
 
 
 interface AgentState { 
-  summary?: string;
-  files?: { [path: string]: string };
+  summary: string;
+  files: { [path: string]: string };
 }
 
   const model = gemini({
-  model: "gemini-2.5-flash",
+  model: "gemini-2.0-flash",
 });
 
 
 
-// const deepseekModel = openai({
+
+// const model = openai({
 //   apiKey: process.env.OPENROUTER_API_KEY, // put your OpenRouter key in .env
 //   baseUrl: "https://openrouter.ai/api/v1",
 //   defaultParameters: {
-//     model: "gemini-2.0-flash", // DeepSeek V3 0324 free
-//     temperature: 0.1, 
+//     model: "openai/gpt-oss-20b:free", // DeepSeek V3 0324 free
 //   }
   
 // });
+
 
 
 export const CodeAgentFunction = inngest.createFunction(
@@ -43,7 +45,7 @@ export const CodeAgentFunction = inngest.createFunction(
 
     // Create CodeAgent
     const CodeAgent = createAgent<AgentState>({
-      name: "CodeAgent",
+      name: "Code-Agent",
       system: PROMPT,
       description: "An agent that can write code and run it in a sandbox",
       model: model, // ✅ now using DeepSeek V3
@@ -54,8 +56,8 @@ export const CodeAgentFunction = inngest.createFunction(
           parameters: z.object({
             command: z.string(),
           }),
-          handler: async ({ command }, context) => {
-            return await context.step?.run("terminal", async () => {
+          handler: async ({ command }, { step }) => {
+            return await step?.run("terminal", async () => {
               const buffers = { stdout: "", stderr: "" };
               try {
                 const sandbox = await getSandbox(sandboxId);
@@ -94,10 +96,10 @@ export const CodeAgentFunction = inngest.createFunction(
               })
             ),
           }),
-          handler: async ({ files }, {step, network} :Tool.Options<AgentState>) => {
+          handler: async ({ files }, { step, network }: Tool.Options<AgentState>) => {
             const newFiles = await step?.run("createOrUpdateFiles", async () => {
               try {
-                const updatedFiles = network?.state?.data?.files || {};
+                const updatedFiles = (network?.state.data.files as { [path: string]: string }) || {};
                 const sandbox = await getSandbox(sandboxId);
                 for (const file of files) {
                   await sandbox.files.write(file.path, file.content);
@@ -109,8 +111,8 @@ export const CodeAgentFunction = inngest.createFunction(
               }
             });
 
-            if (typeof newFiles === "object" && context.network) {
-              context.network.state.data.files = newFiles;
+            if (typeof newFiles === "object" && network) {
+              network.state.data.files = newFiles;
             }
           },
         }),
@@ -121,8 +123,8 @@ export const CodeAgentFunction = inngest.createFunction(
           parameters: z.object({
             files: z.array(z.string()),
           }),
-          handler: async ({ files }, context) => {
-            return await context.step?.run("readFiles", async () => {
+          handler: async ({ files }, {step}) => {
+            return await step?.run("readFiles", async () => {
               try {
                 const sandbox = await getSandbox(sandboxId);
                 const contents = [];
@@ -165,45 +167,44 @@ export const CodeAgentFunction = inngest.createFunction(
 
     const result = await network.run(event.data.value); 
 
-    const isError = !result.state.data.summary  || Object.keys(result.state.data.files || {}).length === 0;
+    const isError = !result.state.data.summary || Object.keys(result.state.data.files || {}).length === 0;
 
     // Get sandbox URL
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
       const sandbox = await getSandbox(sandboxId);
-      const host = await sandbox.getHost(3000);
+      const host =  sandbox.getHost(3000);
       return "https://" + host; 
     });
 
-    await step.run("save-result", async()=> { 
-
-        console.log("isError:", isError); // Log error state
-  console.log("result:", result);  
-      if(isError) { 
-        return await prisma.message.create({ 
-          data : { 
-            projectId: event.data.projectId,
-            content : " Something went wrong ", 
-            role : "ASSISTANT",
-            type : "ERROR",
-          }
-        });
-      }
+  await step.run("save-result", async () => { 
+    console.log("isError:", isError); // Log error state
+    console.log("result:", result);  
+    if (isError) { 
       return await prisma.message.create({ 
-        data : { 
+        data: { 
           projectId: event.data.projectId,
-          content : result.state.data.summary, 
-          role : "ASSISTANT",
-          type : "RESULT",
-          fragment : { 
-            create : { 
-              sandboxUrl : sandboxUrl,
-              title : "Fragment",
-              files : result.state.data.files,
-            }
+          content: " Something went wrong ", 
+          role: "ASSISTANT",
+          type: "ERROR",
+        }
+      });
+    }
+    return await prisma.message.create({ 
+      data: { 
+        projectId: event.data.projectId,
+        content: result.state.data.summary, 
+        role: "ASSISTANT",
+        type: "RESULT",
+        fragment: { 
+          create: { 
+            sandboxUrl: sandboxUrl,
+            title: "Fragment",
+            files: result.state.data.files,
           }
         }
-      })
+      }
     });
+  });
 
     return { 
       sandboxUrl, 

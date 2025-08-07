@@ -1,0 +1,44 @@
+
+import { z } from "zod";
+import { useForm, FormProvider } from "react-hook-form";
+import { useState } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { cn } from "@/lib/utils";
+
+interface Props {
+    projectId: string;
+}
+
+const formSchema = z.object({
+    value: z.string().min(1, "Message cannot be empty")
+        .max(500, "Message cannot exceed 500 characters"),
+});
+
+export const MessageForm = ({ projectId }: Props) => {
+    const [isFocused, setIsFocused] = useState(false);
+    const showUsage = false;
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: { value: "" },
+    });
+
+    const onSubmit = (values: z.infer<typeof formSchema>) => {
+        console.log(values);
+    };
+
+    return (
+        <FormProvider {...form}>
+            <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className={cn(
+                    "relative border p-4 pt-1 rounded-xl bg-sidebar dark:bg-sidebar transition-all",
+                    isFocused && "shadow-xs",
+                    showUsage && "rounded-t-none",
+                )}
+            >
+                Message Form
+            </form>
+        </FormProvider>
+    );
+};
