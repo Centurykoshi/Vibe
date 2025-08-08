@@ -35,7 +35,7 @@ const AssistantMessage = ({ content, fragment, createdAt, isActiveFragment, onFr
         )}>
 
             <div className="flex items-center gap-2 pl-2 mb-2">
-           <Image
+           <Image unoptimized
            src="/wired-outline-478-computer-display-hover-angle.gif"
            alt="Vibe"
            width={40}
@@ -52,7 +52,9 @@ const AssistantMessage = ({ content, fragment, createdAt, isActiveFragment, onFr
                         fragment={fragment}
                         isActiveFragment={isActiveFragment}
                         onFragmentClick={onFragmentClick}
+                        
                     />
+                    
                 )}
             </div>
            
@@ -64,7 +66,7 @@ const AssistantMessage = ({ content, fragment, createdAt, isActiveFragment, onFr
 const FragmentCard = ({ fragment, isActiveFragment, onFragmentClick }: FragmentProps) => { 
     return (
         <button className={cn("flex items-start text-start gap-2 border rounded-lg bg-muted w-fit mt-3 p-3 hover:bg-secondary transition-colors", 
-            isActiveFragment && "bg-primary text-primary-foreground border-primary hover:bg-primary", 
+            isActiveFragment && "bg-primary text-primary-foreground border-primary hover:bg-secondary hover:text-secondary-foreground transition-colors", 
         )}
         onClick={() => onFragmentClick(fragment)}
         >
