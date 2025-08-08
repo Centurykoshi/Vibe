@@ -18,6 +18,7 @@ interface Props {
 import { Suspense } from "react";
 import { Fragment } from "@prisma/client";
 import { ProjectHeader } from "@/modules/projects/ui/components/project-header";
+import { FragmentWeb } from "../components/fragmentweb";
 
 export const ProjectView = ({ projectId }: Props) => {
     const trpc = useTRPC();
@@ -45,7 +46,7 @@ export const ProjectView = ({ projectId }: Props) => {
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={35} minSize={40} className="flex flex-col min-h-0">
                     {/* {JSON.stringify(messages, null, 2)} */}
-                    To do : Preview 
+                 {activefragment && <FragmentWeb data={activefragment} />}
                 </ResizablePanel>
             </ResizablePanelGroup>
         </div>

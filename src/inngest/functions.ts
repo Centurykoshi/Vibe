@@ -3,6 +3,7 @@ import {gemini,  openai, createAgent, createTool, createNetwork ,type Tool} from
 import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox } from "./utils";
 import { PROMPT } from "@/prompt";
+// import { PROMPT } from "@/prompt2";
 import { lastAssistantTextMessageContent } from "./utils";
 import { z } from "zod";
 import {prisma} from "@/lib/db";
@@ -16,7 +17,7 @@ interface AgentState {
 }
 
   const model = gemini({
-  model: "gemini-2.0-flash",
+  model: "gemini-2.5-pro",
 });
 
 
@@ -26,7 +27,7 @@ interface AgentState {
 //   apiKey: process.env.OPENROUTER_API_KEY, // put your OpenRouter key in .env
 //   baseUrl: "https://openrouter.ai/api/v1",
 //   defaultParameters: {
-//     model: "openai/gpt-oss-20b:free", // DeepSeek V3 0324 free
+//     model: "deepseek/deepseek-chat-v3-0324:free", // DeepSeek V3 0324 free
 //   }
   
 // });
