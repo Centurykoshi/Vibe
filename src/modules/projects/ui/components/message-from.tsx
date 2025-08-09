@@ -78,7 +78,7 @@ export const MessageForm  = ({ projectId }: Props) => {
                 className="pt-4 resize-none border-none w-full outline-none bg-transparent"
                 placeholder="what would you like to build"
                 onKeyDown={(e) =>{ 
-                    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                    if (e.key === "Enter") {
                         e.preventDefault();
                         form.handleSubmit(onSubmit)(e);
                     }
