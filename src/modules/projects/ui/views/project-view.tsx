@@ -4,8 +4,8 @@ import {
     ResizablePanel,
     ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useTRPC } from "@/trpc/client";
+
+
 import { MessagesContainer } from "@/modules/projects/ui/components/messages-container";
 import { useState } from "react";
 
@@ -28,7 +28,7 @@ import { UserControl } from "@/components/user_control";
 import { ErrorBoundary } from "react-error-boundary";
 
 export const ProjectView = ({ projectId }: Props) => {
-    const trpc = useTRPC();
+ 
     const [activefragment, setActiveFragment] = useState<Fragment | null>(null);
     const [tabsstate, setTabsState] = useState<"preview" | "code">("preview");
 
