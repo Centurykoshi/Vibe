@@ -17,8 +17,8 @@ interface AgentState {
 }
 
   const model = gemini({
-  model: "gemini-2.5-pro",
-});
+    model: "gemini-2.5-flash-lite",
+  });
 
 
 

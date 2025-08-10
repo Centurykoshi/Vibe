@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { CodeView } from "@/components/code-view";
 import { FileExplorer } from "@/components/file-explorer";
+import { UserControl } from "@/components/user_control";
 
 export const ProjectView = ({ projectId }: Props) => {
     const trpc = useTRPC();
@@ -68,9 +69,11 @@ export const ProjectView = ({ projectId }: Props) => {
 
                             </TabsList>
                                <div className="ml-auto flex items-center gap-x-2">
-                                    <Button asChild size={"sm"} variant={"default"}>
+                                    <Button asChild size={"sm"} variant={"tertiary"}>
                                         <Link href={"/pricing"}><CrownIcon /> Upgrade </Link>
+                                        {/* <UserControl/> */}
                                     </Button>
+                                    <UserControl />
                                 </div>
 
                         </div>
