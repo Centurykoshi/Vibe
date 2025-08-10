@@ -53,7 +53,7 @@ export const CodeAgentFunction = inngest.createFunction(
         where: { projectId: event.data.projectId },
         orderBy: { createdAt: "desc" },
         skip: 1,
-        take: 1,
+        take: 2,
       });
 
       for(const message of messages){ 
@@ -63,7 +63,7 @@ export const CodeAgentFunction = inngest.createFunction(
           content : message.content, 
         })
       }
-      return formattedMessages; 
+      return formattedMessages.reverse(); 
       
     });
 

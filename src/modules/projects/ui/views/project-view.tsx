@@ -26,6 +26,7 @@ import Link from "next/link";
 import { CodeView } from "@/components/code-view";
 import { FileExplorer } from "@/components/file-explorer";
 import { UserControl } from "@/components/user_control";
+import { ErrorBoundary } from "react-error-boundary";
 
 export const ProjectView = ({ projectId }: Props) => {
     const trpc = useTRPC();
@@ -40,9 +41,12 @@ export const ProjectView = ({ projectId }: Props) => {
         <div className=" h-screen">
             <ResizablePanelGroup direction="horizontal">
                 <ResizablePanel defaultSize={25} minSize={20} className="flex flex-col min-h-0">
+                    <ErrorBoundary fallback={<p>Error loading project</p>}>
                     <Suspense fallback={<p>Loading Project ...</p>}>
                         <ProjectHeader projectId={projectId} />
                     </Suspense>
+                    </ErrorBoundary>
+                    <ErrorBoundary fallback={<p>Error loading messages</p>}>
                     <Suspense fallback={<p>Loading Messages...</p>}>
                         <MessagesContainer
                             projectId={projectId}
@@ -50,6 +54,7 @@ export const ProjectView = ({ projectId }: Props) => {
                             setActiveFragment={setActiveFragment}
                         />
                     </Suspense>
+                    </ErrorBoundary>
                 </ResizablePanel>
                 <ResizableHandle className="hover:bg-primary transition-colors" />
                 <ResizablePanel defaultSize={35} minSize={40} >
