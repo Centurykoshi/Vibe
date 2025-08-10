@@ -1,5 +1,5 @@
 import { inngest } from "./client";
-import {gemini,  openai, createAgent, createTool, createNetwork ,type Tool, type Message, createState} from "@inngest/agent-kit";
+import {gemini, createAgent, createTool, createNetwork ,type Tool, type Message, createState} from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox } from "./utils";
 import { PROMPT, FRAGMENT_TITLE_PROMPT,RESPONSE_PROMPT } from "@/prompt";
@@ -17,7 +17,7 @@ interface AgentState {
 }
 
   const model = gemini({
-    model: "gemini-2.5-pro",
+    model: "gemini-2.5-flash",
   });
 
 

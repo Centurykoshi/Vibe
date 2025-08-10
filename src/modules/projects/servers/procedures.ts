@@ -74,8 +74,7 @@ export const projectRouter = createTRPCRouter({
             projectName = titleResult.output[0].content;
           }
         }
-      } catch (e) {
-        // fallback to default name if agent fails
+      } catch {
         projectName = "Untitled Project";
       }
 

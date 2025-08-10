@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import {MessageRole, Fragment, MessageType} from "@prisma/client";
 import Image from "next/image";
-import { ChevronRight, ChevronRightIcon, Code2Icon } from "lucide-react";
-import { Chevron } from "react-day-picker";
+import { ChevronRightIcon, Code2Icon } from "lucide-react";
+
 
 // import { Fragment, MessageType } from "@prisma/client";
 

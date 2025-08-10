@@ -1,6 +1,6 @@
 "use client";
 import { z } from "zod";
-import { Form, FormProvider, useForm } from "react-hook-form";
+import {  FormProvider, useForm } from "react-hook-form";
 import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import TextareaAutosize from 'react-textarea-autosize';
 
 import { FormField } from "@/components/ui/form";
-import { ArrowUpIcon, Loader2Icon, Router } from "lucide-react";
+import { ArrowUpIcon, Loader2Icon } from "lucide-react";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";

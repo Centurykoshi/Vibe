@@ -2,11 +2,10 @@ import { Fragment, useCallback, useState } from "react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./ui/resizable";
 import { Hint } from "./hint";
 import { Button } from "./ui/button";
-import { CopyCheckIcon, CopyIcon, TicketCheck } from "lucide-react";
+import { CopyCheckIcon, CopyIcon } from "lucide-react";
 import { CodeView } from "./code-view";
 import { convertFilesToTreeItems } from "@/lib/utils";
 import { TreeView } from "./tree-view";
-import { max } from "date-fns";
 import { Breadcrumb, BreadcrumbEllipsis, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "./ui/breadcrumb";
 
 type FileCollectioni = { [path: string]: string };

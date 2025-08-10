@@ -1,4 +1,4 @@
-import {createTRPCRouter, baseProcedure, protectedProcedure} from "@/trpc/init";
+import {createTRPCRouter, protectedProcedure} from "@/trpc/init";
 import {z} from "zod";
 import {prisma} from "@/lib/db";
 import { inngest } from "../../../inngest/client";
