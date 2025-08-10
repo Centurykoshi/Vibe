@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { PROJECT_TEMPLATES } from "../../constants";
 import { Button } from "@/components/ui/button";
+import { useClerk } from "@clerk/nextjs";
 
 const formSchema = z.object({
     value: z.string().min(1, "Message cannot be empty")
@@ -29,6 +30,7 @@ export const ProjectForm = () => {
     const router = useRouter();
     const trpc = useTRPC();
     const queryClient = useQueryClient();
+    const clerk = useClerk();  
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: { value: "" },
@@ -50,8 +52,12 @@ export const ProjectForm = () => {
             router.push(`/projects/${data.id}`);
         },
         onError: (error) => {
-            toast.error(error.message || "Failed to create project");
-        }
+            toast.error(error.message);
+            if(error.data?.code ==="UNAUTHORIZED"){ 
+                clerk.openSignIn();
+            }
+    
+        },
     }));
 
 

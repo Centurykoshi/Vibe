@@ -1,18 +1,19 @@
-import {createTRPCRouter, baseProcedure} from "@/trpc/init";
+import {createTRPCRouter, protectedProcedure} from "@/trpc/init";
 import {TRPCError} from "@trpc/server";
 import {z} from "zod";
 import {prisma} from "@/lib/db";
 import { inngest } from "../../../inngest/client";
 import { generateSlug } from "random-word-slugs";
 export const projectRouter = createTRPCRouter({ 
-    getOne : baseProcedure
+    getOne : protectedProcedure
     .input(z.object({ 
         id : z.string().min(1, "Project ID cannot be empty"),
     }))
-    .query(async({input})=> { 
+    .query(async({input, ctx})=> { 
         const existingProject = await prisma.project.findUnique({
             where : { 
                 id : input.id,
+                userId: ctx.auth.userId,
             },
         }); 
 
@@ -24,16 +25,18 @@ export const projectRouter = createTRPCRouter({
         }
         return existingProject;
     }),
-
-      getMany: baseProcedure
-    .query(async () => {
-      return prisma.project.findMany({
+    getMany:protectedProcedure
+    .query(async ({ctx}) => {
+      const projects = await prisma.project.findMany({
+        where : { 
+            userId: ctx.auth.userId,
+        }, 
         orderBy: { updatedAt: "desc" },
       });
+      return projects;
     }),
-            
 
-    create : baseProcedure
+    create : protectedProcedure
     .input(
         
         z.object({
@@ -41,10 +44,11 @@ export const projectRouter = createTRPCRouter({
             .max(5000, "Value cannot exceed 5000 characters"),
         }),
     )
-    .mutation(async ({input}) => { 
+    .mutation(async ({input, ctx}) => { 
 
         const createdProject = await prisma.project.create({ 
             data : { 
+                userId: ctx.auth.userId,
                 name : generateSlug(2, { 
                     format : "kebab"
                 }), 
