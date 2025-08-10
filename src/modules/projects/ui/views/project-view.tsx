@@ -14,7 +14,6 @@ interface Props {
     projectId: string;
 };
 
-
 import { Suspense } from "react";
 import { Fragment } from "@prisma/client";
 import { ProjectHeader } from "@/modules/projects/ui/components/project-header";
