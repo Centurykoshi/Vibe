@@ -23,7 +23,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Code2Icon, CrownIcon, EyeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { CodeView } from "@/components/code-view";
 import { FileExplorer } from "@/components/file-explorer";
 import { UserControl } from "@/components/user_control";
 import { ErrorBoundary } from "react-error-boundary";
@@ -32,10 +31,6 @@ export const ProjectView = ({ projectId }: Props) => {
     const trpc = useTRPC();
     const [activefragment, setActiveFragment] = useState<Fragment | null>(null);
     const [tabsstate, setTabsState] = useState<"preview" | "code">("preview");
-
-    const { data: messages } = useSuspenseQuery(trpc.messages.getMany.queryOptions({
-        projectId,
-    }))
 
     return (
         <div className=" h-screen">
