@@ -23,16 +23,6 @@ interface AgentState {
 
 
 
-// const model = openai({
-//   apiKey: process.env.OPENROUTER_API_KEY, // put your OpenRouter key in .env
-//   baseUrl: "https://openrouter.ai/api/v1",
-//   defaultParameters: {
-//     model: "gemini-2.5-flash-lite", // DeepSeek V3 0324 free
-//   }
-  
-// });
-
-
 
 export const CodeAgentFunction = inngest.createFunction(
 
