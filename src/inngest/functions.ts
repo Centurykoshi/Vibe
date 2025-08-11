@@ -5,7 +5,7 @@ import { getSandbox } from "./utils";
 import { PROMPT, FRAGMENT_TITLE_PROMPT,RESPONSE_PROMPT } from "@/prompt";
 // import { PROMPT } from "@/prompt2";
 import { lastAssistantTextMessageContent } from "./utils";
-import { z } from "zod";
+import { z, ZodTypeAny } from "zod";
 import {prisma} from "@/lib/db";
 
 
