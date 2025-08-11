@@ -1,33 +1,24 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
-    "skipLibCheck": true, // Don't type check node_modules
+    "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node", // Avoid slow bundler resolution
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true, // Speeds up incremental builds
-    "tsBuildInfoFile": ".tsbuildinfo", // Cache file location
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    }
+      "@/*": ["./src/*"]
+    },
+    "types": []
   },
   "include": [
     "**/*.ts",
@@ -36,8 +27,8 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules", // Heavy folder — exclude it
-    ".next", // Build output
+    "node_modules",
+    ".next",
     "dist",
     "build",
     "coverage",
