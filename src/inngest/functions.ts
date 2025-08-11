@@ -8,19 +8,27 @@ import { lastAssistantTextMessageContent } from "./utils";
 import { z } from "zod";
 import {prisma} from "@/lib/db";
 
-import "dotenv/config";
-
 
 interface AgentState { 
   summary: string;
   files: { [path: string]: string };
 }
 
-  const model = gemini({
-    model: "gemini-2.5-flash",
-  });
+  // const model = gemini({
+  //   model: "gemini-2.5-flash",
+  // });
 
 
+
+
+// const model = openai({
+//   apiKey: process.env.OPENROUTER_API_KEY, // put your OpenRouter key in .env
+//   baseUrl: "https://openrouter.ai/api/v1",
+//   defaultParameters: {
+//     model: "gemini-2.5-flash-lite", // DeepSeek V3 0324 free
+//   }
+  
+// });
 
 
 
@@ -69,7 +77,7 @@ export const CodeAgentFunction = inngest.createFunction(
       name: "Code-Agent",
       system: PROMPT,
       description: "An agent that can write code and run it in a sandbox",
-      model: model, // ✅ now using DeepSeek V3
+      model: gemini({model : "gemini-2.5-flash"}),
       tools: [
         createTool({
           name: "terminal",
@@ -193,7 +201,7 @@ export const CodeAgentFunction = inngest.createFunction(
       name: "Fragment-title-generator",
       system: FRAGMENT_TITLE_PROMPT,
       description: "An agent that generates titles for code fragments",
-      model: model,
+      model: gemini({model : "gemini-2.5-flash"}),
     }); 
 
 
@@ -201,7 +209,7 @@ export const CodeAgentFunction = inngest.createFunction(
       name: "Response-generator",
       system: RESPONSE_PROMPT,
       description: "An agent that generates responses based on the task summary",
-      model: model,
+      model: gemini({model : "gemini-2.5-flash"}),
     }); 
 
     const {output : FragmentTitleOutput
@@ -244,7 +252,7 @@ export const CodeAgentFunction = inngest.createFunction(
     // Get sandbox URL
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
       const sandbox = await getSandbox(sandboxId);
-      const host =  sandbox.getHost(3000);
+      const host = await sandbox.getHost(3000);
       return "https://" + host; 
     });
 
